@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA App - Plant Species Analysis System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar Hide/Show Button -->
+    <div class="sidebar-hide-btn" id="sidebarHideBtn" onclick="toggleSidebar()">
+        <i class="fas fa-chevron-left" id="hideIcon"></i>
+    </div>
+
+    <div class="container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="search-section">
+                    <h3><i class="fas fa-search"></i> Research Plant Species</h3>
+                    <div class="search-form">
+                        <input type="text" id="plantSearch" placeholder="Enter plant species name..." />
+
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <h3><i class="fas fa-filter"></i> Basic Filters</h3>
+                    <div class="filter-options">
+                        <label>
+                            <input type="checkbox" id="allergyFilter">
+                            Allergy Reaction Risk
+                        </label>
+                        <label>
+                            <input type="checkbox" id="honeyFilter">
+                            Honey Production
+                        </label>
+                        <label>
+                            <input type="checkbox" id="climateFilter">
+                            Climate Change Impact
+                        </label>
+                        <label>
+                            <input type="checkbox" id="benefitsFilter">
+                            Benefits
+                        </label>
+                        <label>
+                            <input type="checkbox" id="threatsFilter">
+                            Threats
+                        </label>
+                    </div>
+                </div>
+
+
+                <div class="legend">
+                    <h3><i class="fas fa-palette"></i> Color Legend</h3>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <span class="color-dot" style="background-color: #ff6b6b;"></span>
+                            <span>High Allergy Risk</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="color-dot" style="background-color: #4ecdc4;"></span>
+                            <span>High Honey Yield</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="color-dot" style="background-color: #45b7d1;"></span>
+                            <span>Climate Sensitive</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Chat Box -->
+                <div class="ai-chat-container">
+                    <div class="ai-chat-header" onclick="toggleAIChat()">
+                        <i class="fas fa-robot"></i>
+                        <h4>Bee AI</h4>
+                        <i class="fas fa-chevron-down" id="chatToggle"></i>
+                    </div>
+                    <div class="ai-chat-messages" id="chatMessages">
+                        <div class="ai-message">
+                            Hello! You can ask me questions about plant species. How can I help you?
+                        </div>
+                    </div>
+                    <div class="ai-chat-input">
+                        <input type="text" id="chatInput" placeholder="Ask AI a question..." />
+                        <button onclick="sendAIMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Area -->
+            <div class="dashboard-container">
+                <!-- Map Container -->
+                <div class="map-container">
+                    <div id="map"></div>
+                    <div id="gbifLoader" class="map-loader" style="display:none;">Loading data...</div>
+                    <div class="hive-controls">
+                        <button id="selectHiveBtn" class="btn btn-hive">
+                            <i class="fas fa-map-marker-alt"></i> Select Beehive Location
+                        </button>
+                        <div id="hiveInfo" class="hive-info" style="display:none;">
+                            <span id="hiveStatus">Click on the map to place your beehive</span>
+                            <button id="clearHiveBtn" class="btn btn-clear">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phenology Dashboard -->
+                <div class="phenology-dashboard">
+                    <div class="dashboard-tabs">
+                        <button class="tab-button" onclick="switchTab('timeline')">
+                            <i class="fas fa-chart-line"></i> Timeline
+                        </button>
+                        <button class="tab-button" onclick="switchTab('trends')">
+                            <i class="fas fa-trending-up"></i> Multi-Year Trends
+                        </button>
+                        <button class="tab-button" onclick="switchTab('pollinators')">
+                            <i class="fas fa-bug"></i> Pollinators
+                        </button>
+                        <button class="tab-button" onclick="switchTab('harvesting')">
+                            <i class="fas fa-honey-pot"></i> Harvesting
+                        </button>
+                    </div>
+
+                    <div class="tab-content">
+                        
+
+                        <!-- Timeline Tab -->
+                        <div id="timelineTab" class="tab-panel">
+                            <h3>Flowering Timeline</h3>
+                            <div class="timeline-controls">
+                                <select id="timelineYear">
+                                    <option value="2024">2024</option>
+                                    <option value="2023">2023</option>
+                                    <option value="2022">2022</option>
+                                </select>
+                                <select id="timelineSpecies">
+                                    <option value="all">All Species</option>
+                                </select>
+                            </div>
+                            <div id="timelineChart" class="chart-container"></div>
+                            <div id="seasonalCalendar" class="seasonal-calendar"></div>
+                        </div>
+
+                        <!-- Trends Tab -->
+                        <div id="trendsTab" class="tab-panel">
+                            <h3>NASA Satellite Data - Multi-Year Trends</h3>
+                            <div class="trends-controls">
+                                <select id="trendsDataSource">
+                                    <option value="landsat">Landsat</option>
+                                    <option value="modis">MODIS</option>
+                                </select>
+                                <select id="trendsSpecies">
+                                    <option value="all">All Species</option>
+                                </select>
+                            </div>
+                            <div id="trendsChart" class="chart-container"></div>
+                            <div class="trends-analysis">
+                                <div id="anomalyDetection" class="analysis-panel"></div>
+                                <div id="climateCorrelation" class="analysis-panel"></div>
+                            </div>
+                        </div>
+
+                        <!-- Pollinators Tab -->
+                        <div id="pollinatorsTab" class="tab-panel">
+                            <h3>Pollinator Interactions and Ecosystem</h3>
+                            <div class="pollinator-controls" style="margin-bottom: 20px;">
+                                <select id="pollinatorSpecies" style="background: #4a4a4a; color: #fff; border: 1px solid #666; border-radius: 6px; padding: 8px 12px; font-size: 0.9rem;">
+                                    <option value="all">All Species</option>
+                                </select>
+                            </div>
+                            <div class="pollinator-dashboard">
+                                <div class="pollinator-sync">
+                                    <h4>Pollinator Synchronization</h4>
+                                    <div id="pollinatorSyncChart" class="chart-container"></div>
+                                </div>
+                                <div class="pollinator-risks">
+                                    <h4>Pollinator Deficit Risk</h4>
+                                    <div id="pollinatorRiskAlert" class="alert-container"></div>
+                                </div>
+                                <div class="invasive-species">
+                                    <h4>Invasive Species Alerts</h4>
+                                    <div id="invasiveSpeciesAlert" class="alert-container"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Harvesting Tab -->
+                        <div id="harvestingTab" class="tab-panel">
+                            <h3>Honey Harvesting Analysis</h3>
+                            <div class="hive-controls-panel" id="hiveControlsPanel" style="display:none;">
+                                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; background: #3a3a3a; padding: 15px; border-radius: 8px; border: 1px solid #666;">
+                                    <div style="flex: 1;">
+                                        <label style="color: #fff; font-weight: 600; display: block; margin-bottom: 5px;">Select Beehive:</label>
+                                        <select id="hiveSelector" style="width: 100%; padding: 8px; border: 1px solid #666; border-radius: 6px; background: #4a4a4a; color: #fff;">
+                                            <option value="">-- Select a hive --</option>
+                                        </select>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label style="color: #fff; font-weight: 600; display: block; margin-bottom: 5px;">Bee Colonies:</label>
+                                        <input type="number" id="beeColonyCount" min="1" max="100" value="10" 
+                                               style="width: 100%; padding: 8px; border: 1px solid #666; border-radius: 6px; background: #4a4a4a; color: #fff;" />
+                                    </div>
+                                    <div>
+                                        <label style="color: transparent; display: block; margin-bottom: 5px;">Action</label>
+                                        <button id="updateBeeCountBtn" class="btn btn-hive" style="padding: 8px 16px;">
+                                            <i class="fas fa-sync"></i> Update
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="harvestingMessage" class="harvesting-message">
+                                <i class="fas fa-info-circle"></i>
+                                <p>Click "Select Beehive Location" button above the map to place your beehive and analyze honey production potential.</p>
+                            </div>
+                            <div id="harvestingDashboard" class="harvesting-dashboard" style="display:none;">
+                                <div class="hive-summary">
+                                    <h4>Beehive Summary</h4>
+                                    <div id="hiveSummary" class="summary-cards"></div>
+                                </div>
+                                <div class="available-species">
+                                    <h4><i class="fas fa-seedling"></i> Available Flower Species in 5km Radius</h4>
+                                    <div id="availableSpeciesList" class="species-list"></div>
+                                </div>
+                                <div class="species-analysis">
+                                    <h4>Flower Species Distribution</h4>
+                                    <div id="speciesChart" class="chart-container"></div>
+                                </div>
+                                <div class="honey-prediction">
+                                    <h4>Honey Yield Prediction</h4>
+                                    <div id="honeyYieldChart" class="chart-container"></div>
+                                </div>
+                                <div class="seasonal-harvest">
+                                    <h4>Seasonal Harvest Forecast</h4>
+                                    <div id="seasonalHarvestChart" class="chart-container"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Plant Info Modal -->
+        <div id="plantModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="plantInfo"></div>
+            </div>
+        </div>
+
+        <!-- Hive Location Suggestion Modal -->
+        <div id="hiveSuggestionModal" class="modal">
+            <div class="modal-content suggestion-modal">
+                <h2><i class="fas fa-exclamation-triangle" style="color: #f39c12;"></i> No Flowers in This Area</h2>
+                <div id="suggestionContent" class="suggestion-content"></div>
+                <div class="suggestion-buttons">
+                    <button id="moveToSuggestedBtn" class="btn btn-primary">
+                        <i class="fas fa-arrow-right"></i> Move to Suggested Location
+                    </button>
+                    <button id="cancelSuggestionBtn" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hive Name Input Modal -->
+        <div id="hiveNameModal" class="modal">
+            <div class="modal-content suggestion-modal">
+                <h2><i class="fas fa-home" style="color: #f39c12;"></i> Name Your Beehive</h2>
+                <div class="suggestion-content">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; color: #fff; font-weight: 600;">Beehive Name:</label>
+                        <input type="text" id="hiveNameInput" placeholder="e.g., Lavender Field #1" 
+                               style="width: 100%; padding: 10px; border: 1px solid #666; border-radius: 6px; 
+                                      background: #4a4a4a; color: #fff; font-size: 1rem;" />
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; color: #fff; font-weight: 600;">Number of Bee Colonies:</label>
+                        <input type="number" id="beeCountInput" placeholder="e.g., 10" min="1" max="100" value="10"
+                               style="width: 100%; padding: 10px; border: 1px solid #666; border-radius: 6px; 
+                                      background: #4a4a4a; color: #fff; font-size: 1rem;" />
+                        <small style="color: #ccc; display: block; margin-top: 5px;">Each colony has ~40,000-60,000 bees</small>
+                    </div>
+                </div>
+                <div class="suggestion-buttons">
+                    <button id="confirmHiveBtn" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Confirm
+                    </button>
+                    <button id="cancelHiveNameBtn" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
